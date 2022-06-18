@@ -14,7 +14,13 @@ const getUser = (req, res) => {
       }
       res.status(200).send({ data: user });
     })
-    .catch(() => res.status(500).send({ message: 'Ошибка по умолчанию.' }));
+    .catch((err) => {
+      if (err.name === 'CastError') {
+        res.status(400).send({ message: 'Передан некорректный _id пользователя' });
+        return;
+      }
+      res.status(500).send({ message: 'Ошибка по умолчанию.' });
+    });
 };
 
 const createUser = (req, res) => {
