@@ -2,22 +2,33 @@ const User = require('../models/user');
 
 const getUsers = (req, res) => {
   User.find({})
-    .then((users) => res.send({ data: users }))
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
+    .then((users) => res.status(200).send({ data: users }))
+    .catch(() => res.status(500).send({ message: 'Ошибка по умолчанию.' }));
 };
 
 const getUser = (req, res) => {
   User.findById(req.params.userId)
-    .then((user) => res.send({ data: user }))
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
+    .then((user) => {
+      if (!user) {
+        res.status(404).send({ message: 'Пользователь по указанному _id не найден.' });
+      }
+      res.status(200).send({ data: user });
+    })
+    .catch(() => res.status(500).send({ message: 'Ошибка по умолчанию.' }));
 };
 
 const createUser = (req, res) => {
   const { name, about, avatar } = req.body;
 
   User.create({ name, about, avatar })
-    .then((user) => res.send({ data: user }))
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
+    .then((user) => res.status(200).send({ data: user }))
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        res.status(400).send({ message: 'Переданы некорректные данные при обновлении профиля.' });
+        return;
+      }
+      res.status(500).send({ message: 'Ошибка по умолчанию.' });
+    });
 };
 
 const updateUserInfo = (req, res) => {
@@ -28,12 +39,23 @@ const updateUserInfo = (req, res) => {
     { name, about },
     {
       new: true, // обработчик then получит на вход обновлённую запись
-      runValidators: false, // данные будут валидированы перед изменением
+      runValidators: true, // данные будут валидированы перед изменением
       upsert: false, // если пользователь не найден, он будет создан
     },
   )
-    .then((user) => res.send({ data: user }))
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
+    .then((user) => {
+      if (!user) {
+        res.status(404).send({ message: 'Пользователь по указанному _id не найден.' });
+      }
+      res.status(200).send({ data: user });
+    })
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        res.status(400).send({ message: 'Переданы некорректные данные при обновлении профиля.' });
+        return;
+      }
+      res.status(500).send({ message: 'Ошибка по умолчанию.' });
+    });
 };
 
 const updateUserAvatar = (req, res) => {
@@ -44,12 +66,23 @@ const updateUserAvatar = (req, res) => {
     { avatar },
     {
       new: true,
-      runValidators: false,
+      runValidators: true,
       upsert: false,
     },
   )
-    .then((user) => res.send({ data: user }))
-    .catch(() => res.status(500).send({ message: 'Произошла ошибка' }));
+    .then((user) => {
+      if (!user) {
+        res.status(404).send({ message: 'Пользователь по указанному _id не найден.' });
+      }
+      res.status(200).send({ data: user });
+    })
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        res.status(400).send({ message: 'Переданы некорректные данные при обновлении аватара.' });
+        return;
+      }
+      res.status(500).send({ message: 'Ошибка по умолчанию.' });
+    });
 };
 
 module.exports = {
