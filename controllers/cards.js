@@ -1,44 +1,51 @@
 const Card = require('../models/card');
+const ValidationError = require('../errors/validation-err');
+const DefaultError = require('../errors/default-err');
+const NotFoundError = require('../errors/not-found-err');
+const CastError = require('../errors/cast-err');
 
-const createCard = async (req, res) => {
+const createCard = async (req, res, next) => {
   const { name, link } = req.body;
   try {
     const card = await Card.create({ name, link, owner: req.user._id });
     res.status(200).send({ data: card });
   } catch (err) {
     if (err.name === 'ValidationError') {
-      res.status(400).send({ message: 'Переданы некорректные данные при создании карточки.' });
+      next(new ValidationError('Переданы некорректные данные при создании карточки.'));
       return;
     }
-    res.status(500).send({ message: 'Ошибка по умолчанию.' });
+    next(new DefaultError('Ошибка по умолчанию.'));
   }
 };
 
-const getCards = (req, res) => {
+const getCards = (req, res, next) => {
   Card.find({})
     .then((cards) => res.status(200).send({ data: cards }))
-    .catch(() => res.status(500).send({ message: 'Ошибка по умолчанию.' }));
+    .catch(() => next(new DefaultError('Ошибка по умолчанию.')));
 };
 
-const deleteCard = (req, res) => {
-  Card.findByIdAndRemove(req.params.cardId)
-    .then((card) => {
+const deleteCard = (req, res, next) => {
+  Card.findById(req.params.cardId)
+    .then(async (card) => {
       if (!card) {
-        res.status(404).send({ message: 'Карточка с указанным _id не найдена.' });
+        next(new NotFoundError('Карточка с указанным _id не найдена.'));
+      }
+      if (String(card.owner) === String(req.user._id)) {
+        await card.remove();
+        res.status(200).send({ data: card });
         return;
       }
-      res.status(200).send({ data: card });
+      next(new ValidationError('Нельзя удалить карточку, созданную другим пользователем.'));
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(400).send({ message: 'Переданы некорректные данные для удаления карточки.' });
-        return;
+        next(new CastError('Переданы некорректные данные для удаления карточки.'));
       }
-      res.status(500).send({ message: 'Произошла ошибка.' });
+      next(new DefaultError('Ошибка по умолчанию.'));
     });
 };
 
-const likeCard = (req, res) => {
+const likeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $addToSet: { likes: req.user._id } },
@@ -46,20 +53,19 @@ const likeCard = (req, res) => {
   )
     .then((card) => {
       if (!card) {
-        return res.status(404).send({ message: 'Передан несуществующий _id карточки.' });
+        next(new NotFoundError('Передан несуществующий _id карточки.'));
       }
       return res.status(200).send({ data: card });
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(400).send({ message: 'Переданы некорректные данные для постановки/снятии лайка.' });
-        return;
+        next(new CastError('Переданы некорректные данные для постановки/снятии лайка.'));
       }
-      res.status(500).send({ message: 'Произошла ошибка.' });
+      next(new DefaultError('Ошибка по умолчанию.'));
     });
 };
 
-const dislikeCard = (req, res) => {
+const dislikeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } },
@@ -67,16 +73,15 @@ const dislikeCard = (req, res) => {
   )
     .then((card) => {
       if (!card) {
-        return res.status(404).send({ message: 'Передан несуществующий _id карточки.' });
+        next(new NotFoundError('Передан несуществующий _id карточки.'));
       }
       return res.status(200).send({ data: card });
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        res.status(400).send({ message: 'Переданы некорректные данные для постановки/снятии лайка.' });
-        return;
+        next(new CastError('Переданы некорректные данные для постановки/снятии лайка.'));
       }
-      res.status(500).send({ message: 'Произошла ошибка.' });
+      next(new DefaultError('Ошибка по умолчанию.'));
     });
 };
 
