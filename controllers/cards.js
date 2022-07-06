@@ -3,6 +3,7 @@ const ValidationError = require('../errors/validation-err');
 const DefaultError = require('../errors/default-err');
 const NotFoundError = require('../errors/not-found-err');
 const CastError = require('../errors/cast-err');
+const ForbiddenError = require('../errors/forbidden-err');
 
 const createCard = async (req, res, next) => {
   const { name, link } = req.body;
@@ -35,7 +36,7 @@ const deleteCard = (req, res, next) => {
         res.status(200).send({ data: card });
         return;
       }
-      next(new ValidationError('Нельзя удалить карточку, созданную другим пользователем.'));
+      next(new ForbiddenError('Нельзя удалить карточку, созданную другим пользователем.'));
     })
     .catch((err) => {
       if (err.name === 'CastError') {
@@ -69,11 +70,11 @@ const dislikeCard = (req, res, next) => {
   Card.findByIdAndUpdate(
     req.params.cardId,
     { $pull: { likes: req.user._id } },
-    { new: true },
+    // { new: true },
   )
     .then((card) => {
       if (!card) {
-        next(new NotFoundError('Передан несуществующий _id карточки.'));
+        return next(new NotFoundError('Передан несуществующий _id карточки.'));
       }
       return res.status(200).send({ data: card });
     })
