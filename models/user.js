@@ -1,5 +1,8 @@
 const mongoose = require('mongoose');
 const validator = require('validator');
+const {
+  regexUrl,
+} = require('../utils/utils');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -21,7 +24,7 @@ const userSchema = new mongoose.Schema({
     validate: {
       // eslint-disable-next-line object-shorthand
       validator: function (v) {
-        return /^https?:\/\/(w{3}\.)?[a-z\d]+\.[\w\-._~:/?#[\]@!$&'()*+,;=]{2,}#?$/i.test(v);
+        return regexUrl.test(v);
       },
       message: 'Неверный формат url.',
     },
