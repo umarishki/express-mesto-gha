@@ -6,6 +6,7 @@ const {
   createUser,
   login,
 } = require('./controllers/users');
+const NotFoundError = require('./errors/not-found-err');
 
 const PORT = 3000;
 const app = express();
@@ -40,8 +41,7 @@ app.use('/users', require('./routes/users'));
 app.use('/cards', require('./routes/cards'));
 
 app.use((req, res, next) => {
-  res.status(404).send({ message: 'Страница не найдена' });
-  next();
+  next(new NotFoundError('Страница не найдена'));
 });
 
 app.use(errors());

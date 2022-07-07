@@ -9,19 +9,18 @@ const createCard = async (req, res, next) => {
   const { name, link } = req.body;
   try {
     const card = await Card.create({ name, link, owner: req.user._id });
-    res.status(200).send({ data: card });
+    return res.send({ data: card });
   } catch (err) {
     if (err.name === 'ValidationError') {
-      next(new ValidationError('Переданы некорректные данные при создании карточки.'));
-      return;
+      return next(new ValidationError('Переданы некорректные данные при создании карточки.'));
     }
-    next(new DefaultError('Ошибка по умолчанию.'));
+    return next(new DefaultError('Ошибка по умолчанию.'));
   }
 };
 
 const getCards = (req, res, next) => {
   Card.find({})
-    .then((cards) => res.status(200).send({ data: cards }))
+    .then((cards) => res.send({ data: cards }))
     .catch(() => next(new DefaultError('Ошибка по умолчанию.')));
 };
 
@@ -29,20 +28,19 @@ const deleteCard = (req, res, next) => {
   Card.findById(req.params.cardId)
     .then(async (card) => {
       if (!card) {
-        next(new NotFoundError('Карточка с указанным _id не найдена.'));
+        return next(new NotFoundError('Карточка с указанным _id не найдена.'));
       }
       if (String(card.owner) === String(req.user._id)) {
         await card.remove();
-        res.status(200).send({ data: card });
-        return;
+        return res.send({ data: card });
       }
-      next(new ForbiddenError('Нельзя удалить карточку, созданную другим пользователем.'));
+      return next(new ForbiddenError('Нельзя удалить карточку, созданную другим пользователем.'));
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        next(new CastError('Переданы некорректные данные для удаления карточки.'));
+        return next(new CastError('Переданы некорректные данные для удаления карточки.'));
       }
-      next(new DefaultError('Ошибка по умолчанию.'));
+      return next(new DefaultError('Ошибка по умолчанию.'));
     });
 };
 
@@ -54,15 +52,15 @@ const likeCard = (req, res, next) => {
   )
     .then((card) => {
       if (!card) {
-        next(new NotFoundError('Передан несуществующий _id карточки.'));
+        return next(new NotFoundError('Передан несуществующий _id карточки.'));
       }
-      return res.status(200).send({ data: card });
+      return res.send({ data: card });
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        next(new CastError('Переданы некорректные данные для постановки/снятии лайка.'));
+        return next(new CastError('Переданы некорректные данные для постановки/снятии лайка.'));
       }
-      next(new DefaultError('Ошибка по умолчанию.'));
+      return next(new DefaultError('Ошибка по умолчанию.'));
     });
 };
 
@@ -76,13 +74,13 @@ const dislikeCard = (req, res, next) => {
       if (!card) {
         return next(new NotFoundError('Передан несуществующий _id карточки.'));
       }
-      return res.status(200).send({ data: card });
+      return res.send({ data: card });
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        next(new CastError('Переданы некорректные данные для постановки/снятии лайка.'));
+        return next(new CastError('Переданы некорректные данные для постановки/снятии лайка.'));
       }
-      next(new DefaultError('Ошибка по умолчанию.'));
+      return next(new DefaultError('Ошибка по умолчанию.'));
     });
 };
 

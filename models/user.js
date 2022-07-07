@@ -18,6 +18,13 @@ const userSchema = new mongoose.Schema({
   },
   avatar: {
     type: String,
+    validate: {
+      // eslint-disable-next-line object-shorthand
+      validator: function (v) {
+        return /^https?:\/\/(w{3}\.)?[a-z\d]+\.[\w\-._~:/?#[\]@!$&'()*+,;=]{2,}#?$/i.test(v);
+      },
+      message: 'Неверный формат url.',
+    },
     default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
     required: false,
   },
